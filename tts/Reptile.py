@@ -16,7 +16,8 @@ chaptersNumber = 1;                         #一次将多少章转为音频
 wavTempFolder = "tempWav";                  #音频文件暂存位置
 #wavTemp = "tempWav.wav";                    #用于多章节融合
 wavOutput = "outputWav";                    #音频输出文件夹
-speaker = "14";                             #音频发言人
+speaker = "17";                             #音频发言人
+audio = "14";                               #参考音频
 file = "output.txt";
 ini = "ouput.ini";
 start = 10 + 1                              #初始推荐章节数量
@@ -30,6 +31,7 @@ haveTitle = True;                          #是否有数字章节头(为了小�
 timeWait = [1,3];                           #等待时间([最小值,最大值])
 maxErrorTimes = 10;                          #章节爬取最大错误次数
 removeHTML = False;                         #是否移除文章中的URL地址(测试功能)
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"    #设置GPU,如果有CUDA则能加速语言生成
 
 #----------------------------------------------------------#
 headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36' }
@@ -59,7 +61,6 @@ reptileGet = True;                          #爬取成功
 tempStartIndex = 0;                         #临时爬取章节指针(用于根据章节数量产生音频)
 tempFileNames = "";                         #临时爬取章节名称总和(用于生成音频的名称)
 chaptersNumber = chaptersNumber<1 and 1 or chaptersNumber;
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"    #设置GPU,如果有CUDA则能加速
 #----------------------------------------------------------#
 
 #------------------清空一些不重要的数据--------------------#
@@ -75,7 +76,7 @@ def openWriteAdd(s:str,filePath = file):
         f.write(s);
     return;
 
-def openWtite(path:str,s:str):
+def openWrite(path:str,s:str):
     '''
     打开一个不存在的文件并写内容
     '''
@@ -114,7 +115,7 @@ def saveIni(url:str,urladds:list,names:list,index:int):
     '''
     保存INI
     '''
-    openWtite(ini,"URL:"+str(url)+"\nURLADDS:"+','.join(urladds)+"\nNAMES:"+','.join(names)+"\nINDEX:"+str(index));
+    openWrite(ini,"URL:"+str(url)+"\nURLADDS:"+','.join(urladds)+"\nNAMES:"+','.join(names)+"\nINDEX:"+str(index));
     return;
 
 def changeIniIndex(index:int):
@@ -123,7 +124,7 @@ def changeIniIndex(index:int):
     '''
     lines = openReadLines(ini);
     lines[3] = "INDEX:"+str(index);
-    openWtite(ini,"".join(lines));
+    openWrite(ini,"".join(lines));
     return;
 
 def getTime(second:int):
@@ -580,14 +581,14 @@ try:
         if isLines == False:
             openWriteAdd(allText);                      #单行内容
             if tempStartIndex==0:   
-                openWtite(txtTempFile,allText);
+                openWrite(txtTempFile,allText);
             else:
                 openWriteAdd(allText,txtTempFile); 
         else:
             openWrites(allText);                        #多行内容
             #openWrites(allText[:len(allText)-3]);       #去掉最后行尾网站信息
             if tempStartIndex==0:
-                openWtite(txtTempFile,"");
+                openWrite(txtTempFile,"");
                 openWrites(allText,textTempFile);
             else:
                 openWrites(allText,textTempFile);
@@ -620,7 +621,7 @@ try:
 
         #因为将文件转为音频了,本身就需要等待一段时间,所以不需要等待爬取限制
         if tempStartIndex==0:
-            readTxtToWav(txtTempFile,wavTempFolder);    #将临时章节文件转为大量wav文件
+            readTxtToWav(txtTempFile,wavTempFolder,speaker=speaker,audio=audio);    #将临时章节文件转为大量wav文件
             readAdd(wavTempFolder,os.path.join(wavOutput,f"{tempFileNames}.wav"));
             tempFileNames = "";
             deleteDir(wavTempFolder);

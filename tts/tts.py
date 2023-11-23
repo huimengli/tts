@@ -7,10 +7,12 @@ from pydub import AudioSegment;
 
 outputFile = "output.wav";                      #输出文件
 output_folder = "tempWav";                      #音频文件暂存位置
-speaker = "14";                                 #语言模型
+speaker = "24";                                 #语言模型
+audio = "14";                               #参考音频
 file_path = "女主来现实砍我，你跟我说游戏.txt"  #输入文件
+goodSpeaker = [0,1,4,17,22]                     #好的说话者
 
-def openWtite(path:str,s:str):
+def openWrite(path:str,s:str):
     '''
     打开一个不存在的文件并写内容
     '''
@@ -66,7 +68,7 @@ def clean_and_check(sentence):
     # 检查清理后的句子是否为空
     return cleaned_sentence.strip() != ''
 
-def readTxtToWav(file_path, output_folder):
+def readTxtToWav(file_path, output_folder,speaker="0",audio="14"):
     # 确保输出文件夹存在
     os.makedirs(output_folder, exist_ok=True)
 
@@ -94,7 +96,7 @@ def readTxtToWav(file_path, output_folder):
     for i, sentence in enumerate(sentences, start=1):
         if not clean_and_check(sentence):
             continue;
-        wav_data = tts_sdk(sentence,audio=speaker)
+        wav_data = tts_sdk(sentence,speaker=speaker,audio="14")
         with open(os.path.join(output_folder, f"{i}.wav"), 'wb') as f:
             f.write(wav_data)
 
@@ -103,6 +105,15 @@ if __name__ == "__main__":
     os.environ["CUDA_VISIBLE_DEVICES"] = "1"        #设置GPU,如果有CUDA则能加速
     #print(torch.cuda.is_available());
 
-    readTxtToWav(file_path,output_folder);
-    readAdd(output_folder,outputFile);
-    deleteDir(output_folder);
+    #将文件转为WAV
+    #readTxtToWav(file_path,output_folder);
+    #readAdd(output_folder,outputFile);
+    #deleteDir(output_folder);
+
+    #测试
+    testText = "这是一段测试的内容.";
+    #for x in range(24):
+    #    wav = tts_sdk(testText,speaker=str(x));
+    #    openWrite(os.path.join(output_folder, f"{x}.wav"),wav);
+    wav = tts_sdk(testText,speaker=speaker);
+    openWrite(outputFile,wav);
