@@ -18,16 +18,20 @@ def openWtite(path:str,s:str):
         f.write(s);
     return;
 
-def readAdd(folder_path,outputFile):
+def readAdd(folder_path,outputFile,anotherFile=None):
     '''
     读取文件夹中的所有wav文件并且按照文件名顺序合并
+    anotherFile 头部追加文件
     '''
     # 获取文件夹中所有的wav文件
     files = [f for f in os.listdir(folder_path) if f.endswith('.wav')]
     files.sort()  # 按文件名排序
 
     # 读取并合并文件
-    combined = AudioSegment.empty()
+    combined = AudioSegment.empty();
+    if anotherFile!=None:
+        sound = AudioSegment.from_wav(anotherFile);
+        combined += sound;
     for file in files:
         sound = AudioSegment.from_wav(os.path.join(folder_path, file))
         combined += sound
