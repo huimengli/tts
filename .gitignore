@@ -364,3 +364,6 @@ FodyWeavers.xsd
 
 env/
 env1/
+/tts/tempWav
+/tts/ouput.ini
+/tts/outputWav

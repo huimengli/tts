@@ -58,6 +58,14 @@ def deleteDir(folder_path):
     else:
         print("The folder does not exist.")
 
+def clean_and_check(sentence):
+    # 删除所有非打印字符和多余的空白
+    cleaned_sentence = re.sub(r'\s+', ' ', sentence)  # 替换所有空白字符为单个空格
+    cleaned_sentence = re.sub(r'[^\w\s]', '', cleaned_sentence)  # 删除非单词字符和空白字符
+
+    # 检查清理后的句子是否为空
+    return cleaned_sentence.strip() != ''
+
 def readTxtToWav(file_path, output_folder):
     # 确保输出文件夹存在
     os.makedirs(output_folder, exist_ok=True)
@@ -84,6 +92,8 @@ def readTxtToWav(file_path, output_folder):
 
     # 将每个句子转换成语音
     for i, sentence in enumerate(sentences, start=1):
+        if not clean_and_check(sentence):
+            continue;
         wav_data = tts_sdk(sentence,audio=speaker)
         with open(os.path.join(output_folder, f"{i}.wav"), 'wb') as f:
             f.write(wav_data)

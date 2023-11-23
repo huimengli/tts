@@ -9,24 +9,24 @@ from tts import readTxtToWav;
 from tts import readAdd;
 from tts import deleteDir;
 
-webUrl = "http://www.xinbqg.org/112/112048/";
-webUrlForEach = "http://www.xinbqg.org";
+webUrl = "https://www.letnovel.org/257/257831/";
+webUrlForEach = "https://www.letnovel.org";
 txtTempFile = "temp.txt";                   #用于给文本转语音用的临时文件
-chaptersNumber = 1;                         #一次将多少章转为音频
+chaptersNumber = 3;                         #一次将多少章转为音频
 wavTempFolder = "tempWav";                  #音频文件暂存位置
 #wavTemp = "tempWav.wav";                    #用于多章节融合
 wavOutput = "outputWav";                    #音频输出文件夹
 speaker = "14";                             #音频发言人
 file = "output.txt";
 ini = "ouput.ini";
-start = 10 + 0                              #初始推荐章节数量
+start = 10 + 1                              #初始推荐章节数量
 passUrl = ''                                #排除的对象(URL排除)
 passName = "无标题章节";                    #排除的对象(章节名排除)
 needProxy = False;                          #下载网站是否需要代理
 needVerify = True;                         #是否需要网页ssl证书验证
 ignoreDecode = False;                        #忽略解码错误内容
 isLines = False;                             #内容是否是多行的
-haveTitle = False;                          #是否有数字章节头(为了小说阅读器辨别章节用)
+haveTitle = True;                          #是否有数字章节头(为了小说阅读器辨别章节用)
 timeWait = [1,3];                           #等待时间([最小值,最大值])
 maxErrorTimes = 10;                          #章节爬取最大错误次数
 removeHTML = False;                         #是否移除文章中的URL地址(测试功能)
@@ -59,6 +59,12 @@ reptileGet = True;                          #爬取成功
 tempStartIndex = 0;                         #临时爬取章节指针(用于根据章节数量产生音频)
 tempFileNames = "";                         #临时爬取章节名称总和(用于生成音频的名称)
 chaptersNumber = chaptersNumber<1 and 1 or chaptersNumber;
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"    #设置GPU,如果有CUDA则能加速
+#----------------------------------------------------------#
+
+#------------------清空一些不重要的数据--------------------#
+#----------------------------------------------------------#
+deleteDir(wavTempFolder);                   #清空临时wav文件夹
 #----------------------------------------------------------#
 
 def openWriteAdd(s:str,filePath = file):
@@ -490,10 +496,10 @@ try:
             #text = re.compile(r'<div class="content" id="content">([\s\S]*)<div class="section-opt')
             #text = re.compile(r'div id="content" class="showtxt">([\s\S]*)<\/div>\n<script>read3')
             #text = re.compile(r'div id="content">([\s\S]*)<script>read3')
-            text = re.compile(r'div id="content">([\s\S]*)<\/div>[\n\t\0\r\ ]*<script>read3')
+            #text = re.compile(r'div id="content">([\s\S]*)<\/div>[\n\t\0\r\ ]*<script>read3')
             #text = re.compile(r'div id="content">([\s\S]*)<br /><br />\(https')
             #text = re.compile(r'div id="content" deep="3">([\s\S]*)<br><br>\n为您提供大神薪意')
-            #text = re.compile(r'div id="content">([\s\S]*)无尽的昏迷过后')
+            text = re.compile(r'div id="content">([\s\S]*)无尽的昏迷过后')
             #text = re.compile(r'div id="content" class="showtxt">([\s\S]*)<script')
             #text = re.compile(r'div id="content" class="showtxt">([\s\S]*)<script>read3')
             #text = re.compile(r'div id="content" class="showtxt">([\s\S]*)<script>showByJs')
@@ -594,11 +600,30 @@ try:
             consoleWrite(f"[{math.floor(i/pageCount*10000)/100:.2f}%]","green");
             print(format_string3(y)+"已经下载完成    ETA: "+getTime((pageCount-i)*(timeWait[0]+timeWait[1])//2));
             if chaptersNumber==1:   
-                pass
+                tempFileNames = format_string3(y);
+            else:
+                if tempStartIndex==1:
+                    tempFileNames += f"第{i+1}章-";
+                elif tempStartIndex==0:
+                    tempFileNames += f"第{i+1}章";
         else:
             #print("\r","第"+str(i+1)+"章"+y+"已经下载完成 进度: "+str(math.floor(i/pageCount*10000)/100)+"% ,ETA: "+getTime((pageCount-i)*(timeWait[0]+timeWait[1])//2),end="             ",flush=True);
             consoleWrite(f"[{math.floor(i/pageCount*10000)/100:.2f}%]","green");
             print(format_string3("第"+str(i+1)+"章"+y)+"已经下载完成    ETA: "+getTime((pageCount-i)*(timeWait[0]+timeWait[1])//2));
+            if chaptersNumber==1:   
+                tempFileNames = format_string3(f"第{i+1}章 {y}");
+            else:
+                if tempStartIndex==1:
+                    tempFileNames += f"第{i+1}章-";
+                elif tempStartIndex==0:
+                    tempFileNames += f"第{i+1}章";
+
+        #因为将文件转为音频了,本身就需要等待一段时间,所以不需要等待爬取限制
+        if tempStartIndex==0:
+            readTxtToWav(txtTempFile,wavTempFolder);    #将临时章节文件转为大量wav文件
+            readAdd(wavTempFolder,os.path.join(wavOutput,f"{tempFileNames}.wav"));
+            tempFileNames = "";
+            deleteDir(wavTempFolder);
 
         i+=1;
         changeIniIndex(i);
@@ -606,10 +631,6 @@ try:
         #time.sleep(r.randint(0,1));             #无爬取限制的网站
         #time.sleep(r.randint(timeWait[0],timeWait[1]));
         
-        #因为将文件转为音频了,本身就需要等待一段时间,所以不需要等待爬取限制
-        if tempStartIndex==0:
-            readTxtToWav(txtTempFile,wavTempFolder);    #将临时章节文件转为大量wav文件
-            readAdd(wavTempFolder,w)
 
     print("");
     consoleWrite("小说已经下载完成","DarkGreen");
