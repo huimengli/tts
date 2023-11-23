@@ -12,7 +12,7 @@ from tts import deleteDir;
 webUrl = "https://www.letnovel.org/257/257831/";
 webUrlForEach = "https://www.letnovel.org";
 txtTempFile = "temp.txt";                   #用于给文本转语音用的临时文件
-chaptersNumber = 3;                         #一次将多少章转为音频
+chaptersNumber = 1;                         #一次将多少章转为音频
 wavTempFolder = "tempWav";                  #音频文件暂存位置
 #wavTemp = "tempWav.wav";                    #用于多章节融合
 wavOutput = "outputWav";                    #音频输出文件夹
